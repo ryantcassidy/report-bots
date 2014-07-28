@@ -4,16 +4,18 @@
 var casper = require("casper").create({
     viewportSize: {
         width: 1024,
-        height: 768
+        height: 1024
     }
 });
 
 var gerryUsername = "gerrystieber";
 var gerryPassword = "stiebergerry";
+var screenshotnum = 1;
   
 casper.screenAndLog = function(filename) {
-    this.captureSelector(filename, "html");
+    this.captureSelector(screenshotnum.toString() + "-" + filename, "html");
     this.echo("Saved screenshot of " + (this.getCurrentUrl()) + " to " + filename);
+    screenshotnum += 1;
 };
 
 casper.verifyThisExists = function(selectr) {
@@ -24,7 +26,7 @@ casper.verifyThisExists = function(selectr) {
   
 casper.start("https://twitter.com/login", function() {
     this.echo("Signing in to twitter");
-    this.screenAndLog("a.jpg");
+    this.screenAndLog("signin.jpg");
     //var formpath = x('//*[@class="t1-form clearfix signin js-signin"]');
     var formpath = ".t1-form.clearfix.signin.js-signin";
     this.verifyThisExists(formpath);
@@ -39,14 +41,23 @@ casper.start("https://twitter.com/login", function() {
     });
 });
 
+casper.then(function(){
+  this.screenAndLog("post-login.jpg");
+});
+
 // Try to make the Block dialog visible
 casper.thenOpen("https://twitter.com/ChidiSchneider/status/473161569678131203", function() {
+  this.echo("opened tweet indiv page");
+});
+
+casper.waitForSelector('div.action-more-container button.dropdown-toggle', function(){
   //this.clickLabel('More', 'button');
   this.echo("Trying to make the block/report dialog visible...");
+  // Maybe don't need this first click
   this.click('div.action-more-container button.dropdown-toggle');
-  this.screenAndLog("b1.jpg");
+  this.screenAndLog("dropdown-clicked.jpg");
   this.click('li.block-or-report-link button.dropdown-link');
-  this.screenAndLog("b2.jpg");
+  this.screenAndLog("clicked-report-link.jpg");
 });
 
 // Un-check "Block this user"
@@ -54,51 +65,74 @@ casper.thenOpen("https://twitter.com/ChidiSchneider/status/473161569678131203", 
 casper.then(function() {
   this.echo("Unchecking 'block this user'...");
   this.click('input[type="checkbox"][name="block_user"]');
-  this.screenAndLog("c.jpg");
+  this.screenAndLog("uncheck-block-user.jpg");
 });
-
 
 // Click the radio button for marking this tweet as 'spam'
 casper.then(function() {
-  casper.echo("Change radio button from 'annoying' to 'spam'...");
+  this.echo("Change radio button from 'annoying' to 'spam'...");
   var spamPath = 'input[type="radio"][value="spam"][name="report_type"]';
+  this.verifyThisExists(spamPath);
   this.click(spamPath);
-  this.screenAndLog("d.jpg");
+  this.screenAndLog("click-radio.jpg");
 });
 
-casper.then(function() {
-  casper.echo("Submitting report form...");
-  var submitBlockPath = 'button.report-tweet-report-button';
-  this.verifyThisExists(submitBlockPath);
-  this.click(submitBlockPath);
-  this.screenAndLog("e.jpg");
+casper.thenEvaluate(function() {
+  document.querySelector('button.report-tweet-report-button').click();
 });
 
+casper.then(function(){
+  this.echo("just clicked the button");
+});
 
-casper.then(function() {
-  casper.echo("Done");
-  this.screenAndLog("f.jpg");
+casper.wait(3000, function() {
+  this.echo("I waited 3s");
 });
 
 /*
-    var btnpath = x('//*[@class="submit btn primary-btn"]');
-    if(!this.exists(btnpath)) {
-      this.die()
-    };
-
-    this.click(btnpath);
-    this.wait(4000);
-    this.screenAndLog("b.jpg");
-    this.echo("Signed in?");
-casper.start("https://twitter.com/GerryStieber/status/473161868820099072", function() {
-    this.waitForSelector("tweet", (function() {
-        this.captureSelector(filename, "html");
-        this.echo("Saved screenshot of " + (this.getCurrentUrl()) + " to " + filename);
-    }), (function() {
-        this.die("Timeout reached. Fail whale?");
-        this.exit();
-    }), 25000);
+casper.then(function() {
+  this.wait(3000);
 });
 */
 
+
+casper.then(function() {
+  this.echo("Submitted report form and waited 3s...???");
+  this.screenAndLog("done-huh.jpg");
+});
+
+casper.then(function() {
+  this.echo("Done");
+  this.screenAndLog("finished.jpg");
+});
+
 casper.run();
+/*
+casper.thenEvaluate(function() {
+  this.echo("Submitting report form...???");
+  var submitBlockPath = 'div.submit-section button:not([disabled="disabled"])';
+  this.echo(document.querySelector(submitBlockPath));
+  this.screenAndLog("done-huh.jpg");
+});
+*/
+/*
+casper.then(function() {
+  casper.echo("Submitting report form...");
+  //var submitBlockPath = 'div.submit-section button:not([disabled="disabled"])';
+  //var submitBlockPath = 'button.report-tweet-report-button';
+  //var submitBlockPath = 'button.btn.primary-btn.report-tweet-report-button';
+  var submitBlockPath = 'button';
+  
+  this.thenEvaluate( function () {
+    casper.echo(document.querySelector(submitBlockPath));
+  });
+
+  this.verifyThisExists(submitBlockPath);
+  //this.click(submitBlockPath);
+  this.thenEvaluate( function () {
+    document.querySelector(submitBlockPath).click();
+  });
+  this.screenAndLog("submitted.jpg");
+});
+
+*/
